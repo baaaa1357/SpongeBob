@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>SpongeBob</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+    body, html {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-family: 'Roboto', sans-serif;
+    }
+    #gameContainer {
+        width: 80%;
+        height: 100%;
+        background: url('sea.jpg') no-repeat center center fixed; 
+        background-size: cover;
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+    #instructions {
+        width: 20%;
+        height: 100%;
+        background-color: #f0f0f0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        font-size: 16px;
+    }
+    .player, .ai {
+        width: 50px;
+        height: 50px;
+        position: absolute;
+        border-radius: 50%; /* 圆形默认样式 */
+        background-color: blue; /* 默认背景颜色 */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
+    }
+    .ai {
+        background-color: red; /* AI的颜色 */
+    }
+    #collisionModal {
+        display: none;
+        position: fixed;
+        width: 40%;
+        height: 50%;
+        top: 25%;
+        left: calc(20% + 10%);
+        background-color: white;
+        z-index: 1000;
+        padding: 20px;
+        box-sizing: border-box;
+        text-align: center;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+    }
+    .modal-image {
+        width: 25%;
+        height: auto;
+    }
+    #spongeBobImage {
+        top: 5%;
+        left: 10%;
+    }
+    #patrickStarImage {
+        top: 5%;
+        right: 10%;
+    }
+    .input-box {
+        width: 10%;
+    }
+    #spongeBobInput {
+        position: absolute;
+        top: 60%;
+        left: 15%;
+        color: black;
+    }
+    #patrickStarInput {
+        position: absolute;
+        top: 60%;
+        right: 15%;
+        background-color: lightgray;
+        color: lightgray;
+    }
+    #timer {
+        margin-top: 40px;
+        font-size: 24px;
+    }
+    .prompt {
+        position: absolute;
+        width: 90%;
+        font-size: 14px;
+        color: black;
+        text-align: left;
+    }
+    #spongeBobPrompt {
+        top: 65%;
+        left: 10%;
+    }
+    #largeInput {
+        position: absolute;
+        width: 20%;
+        top: 80%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 18px;
+    }
+    #levelUp {
+        position: fixed;
+        top: 40%;
+        left: calc(20% + 40%);
+        transform: translate(-50%, -50%);
+        font-size: 64px;
+        font-family: 'Permanent Marker', cursive;
+        color: #FF5733;
+        display: none;
+    }
+    #startModal {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        width: 400px;
+        height: 400px;
+        top: 50%;
+        left: calc(20% + 40%);
+        transform: translate(-50%, -50%);
+        background-color: white;
+        z-index: 1000;
+        padding: 20px;
+        box-sizing: border-box;
+        border: 2px solid #000;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+        text-align: center;
+    }
+    .start-input {
+        margin: 10px 0;
+        padding: 10px;
+        width: 80%;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+    .start-prompt {
+        margin: 10px 0;
+        font-size: 16px;
+    }
+    #startButton {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0px 2px 2px rgba(0,0,0,0.2);
+        margin-top: 20px;
+    }
+    #gameCountdown {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 24px;
+        color: white;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+    #startText {
+        font-size: 48px;
+        color: red;
+        display: none;
+        position: absolute;
+        top: 30%;
+        left: calc(20% + 40%);
+        transform: translate(-50%, -50%);
+    }
+    #leaderboard {
+        display: none;
+        position: fixed;
+        width: 50%;
+        height: 50%;
+        top: 25%;
+        left: calc(20% + 25%);
+        background-color: white;
+        z-index: 1001;
+        padding: 20px;
+        box-sizing: border-box;
+        text-align: center;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+    }
+    #leaderboard table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    #leaderboard th, #leaderboard td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: center;
+    }
+    .medal {
+        font-size: 24px;
+    }
+    .gold { color: gold; }
+    .silver { color: silver; }
+    .bronze { color: #cd7f32; }
+    #newGameButton {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0px 2px 2px rgba(0,0,0,0.2);
+    }
+</style>
+</head>
+<body>
+<div id="instructions">
+    <h2>Game Instruction</h2>
+    <p>1. Choose your game duration, difficulty, and name. Click ‘Start’.</p>
+    <p>2. You are the blue circle. Red circles are AIs. You all have an initial level of 0.</p>
+    <p>3. Use arrow keys to control your movement. When you touch an AI, you are into a battle. You have 8 seconds to input an integer between 0-19. Then AI will randomly generate another integer between 0-19. Then you have 12 seconds to multiply them and input your result. If you get it correctly, your level increase and the level of the AI you battle decrease. If you get it wrong, it is the other way around. There will be no decrease of level below 0. The fluctuation of the level depends on the difficulty of the two numbers. Two 0-10 is 0.5, two 11-19 is 1.5 one 0-10 one 11-19 is 1. The levels of AIs will also increase randomly with a speed depending on the difficulty you select.</p>
+    <p>4. When times up, leaderboard will show up and you can choose to restart the game.</p>
+</div>
+<div id="gameContainer">
+    <div id="gameCountdown"></div>
+    <div class="player" id="player1" style="top: 50%; left: 50%;">
+        <span id="playerNameDisplay"></span>
+        <span id="player1Score">0</span>
+    </div>
+</div>
+<div id="collisionModal">
+    <img id="spongeBobImage" class="modal-image" src="SpongeBob.jpg" alt="SpongeBob">
+    <input id="spongeBobInput" class="input-box" type="number" min="0" max="19">
+    <div id="spongeBobPrompt" class="prompt">please input an integer between 0 and 19</div>
+    <img id="patrickStarImage" class="modal-image" src="PatrickStar.jpg" alt="Patrick Star">
+    <input id="patrickStarInput" class="input-box" type="number" min="0" max="19" disabled>
+    <input id="largeInput" type="number" min="0" max="999" placeholder="result">
+    <p id="timer">8</p>
+    <div id="startText">Start!</div>
+</div>
+<div id="levelUp">Level Up!</div>
+<div id="leaderboard">
+    <h2>Leaderboard</h2>
+    <table id="leaderboardTable">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <button id="newGameButton">New Game</button>
+</div>
+<div id="startModal">
+    <div class="start-prompt">Game Duration (minutes):</div>
+    <input id="gameDuration" class="start-input" type="number" min="1" max="60">
+    <div class="start-prompt">Difficulty (1-10):</div>
+    <input id="gameDifficulty" class="start-input" type="number" min="1" max="10">
+    <div class="start-prompt">Player (name):</div>
+    <input id="playerName" class="start-input" type="text">
+    <button id="startButton">Start Game</button>
+</div>
+<script>
+    const gameContainer = document.getElementById('gameContainer');
+    const player = document.getElementById('player1');
+    const playerNameDisplay = document.getElementById('playerNameDisplay');
+    const modal = document.getElementById('collisionModal');
+    const timerDisplay = document.getElementById('timer');
+    const playerScoreDisplay = document.getElementById('player1Score');
+    const spongeBobInput = document.getElementById('spongeBobInput');
+    const patrickStarInput = document.getElementById('patrickStarInput');
+    const largeInput = document.getElementById('largeInput');
+    const levelUpDisplay = document.getElementById('levelUp');
+    const leaderboard = document.getElementById('leaderboard');
+    const leaderboardTable = document.getElementById('leaderboardTable').querySelector('tbody');
+    const newGameButton = document.getElementById('newGameButton');
+    const startModal = document.getElementById('startModal');
+    const startButton = document.getElementById('startButton');
+    const gameDurationInput = document.getElementById('gameDuration');
+    const gameDifficultyInput = document.getElementById('gameDifficulty');
+    const playerNameInput = document.getElementById('playerName');
+    const gameCountdown = document.getElementById('gameCountdown');
+    const startText = document.getElementById('startText');
+
+    let playerScore = 0;
+    const entities = [player];
+    let modalTimer = null;
+    let inputTimer = null;
+    let canMove = true;
+    let canTriggerCollision = true;
+    let collidingEntities = [];
+    let spongeBobValue = 0;
+    let patrickStarValue = 0;
+    let largeInputValue = 0;
+    let gameDuration = 10;
+    let gameDifficulty = 1;
+    let playerName = "Player";
+    let aiScoreChangeInterval = null;
+    let gameEnded = false;
+
+    startButton.addEventListener('click', () => {
+        gameDuration = parseInt(gameDurationInput.value) || 10;
+        gameDifficulty = parseInt(gameDifficultyInput.value) || 1;
+        playerName = playerNameInput.value || "Player";
+        playerNameDisplay.textContent = playerName;
+        startModal.style.display = 'none';
+        gameEnded = false;
+        startGameCountdown(gameDuration);
+        startAIScoreChange(gameDifficulty);
+    });
+
+    newGameButton.addEventListener('click', () => {
+        leaderboard.style.display = 'none';
+        startModal.style.display = 'flex';
+        playerScore = 0;
+        playerScoreDisplay.textContent = '0';
+        clearInterval(aiScoreChangeInterval);
+        entities.forEach((entity, index) => {
+            if (entity !== player) {
+                entity.querySelector('.aiScore').textContent = '0';
+            }
+        });
+        gameContainer.innerHTML = '';
+        gameContainer.appendChild(gameCountdown);
+        gameContainer.appendChild(player);
+        entities.length = 1;
+        for (let i = 0; i < 5; i++) {
+            const ai = document.createElement('div');
+            ai.className = 'ai';
+            ai.id = `ai${i + 1}`;
+            const position = getRandomPosition();
+            ai.style.top = `${position.posY}px`;
+            ai.style.left = `${position.posX}px`;
+            ai.innerHTML = `<span>${ai.id}</span><span class="aiScore">0</span>`;
+            gameContainer.appendChild(ai);
+            entities.push(ai);
+        }
+        resetPositions();
+    });
+
+    function startGameCountdown(minutes) {
+        let totalSeconds = minutes * 60;
+        updateGameCountdown(totalSeconds);
+        const countdownInterval = setInterval(() => {
+            totalSeconds--;
+            updateGameCountdown(totalSeconds);
+            if (totalSeconds <= 0) {
+                clearInterval(countdownInterval);
+                showLeaderboard();
+                gameEnded = true;
+            }
+        }, 1000);
+    }
+
+    function updateGameCountdown(totalSeconds) {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        gameCountdown.textContent = `Time Left: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    }
+
+    document.addEventListener('keydown', event => {
+        if (canMove && !gameEnded) {
+            switch(event.key) {
+                case 'ArrowUp': player.style.top = `${player.offsetTop - 10}px`; break;
+                case 'ArrowDown': player.style.top = `${player.offsetTop + 10}px`; break;
+                case 'ArrowLeft': player.style.left = `${player.offsetLeft - 10}px`; break;
+                case 'ArrowRight': player.style.left = `${player.offsetLeft + 10}px`; break;
+            }
+        }
+    });
+
+    function checkCollision() {
+        if (canTriggerCollision && !gameEnded) {
+            const playerRect = player.getBoundingClientRect();
+            entities.forEach(entity => {
+                if (entity !== player) {
+                    const entityRect = entity.getBoundingClientRect();
+                    if (playerRect.left < entityRect.right - 5 && playerRect.right > entityRect.left + 5 &&
+                        playerRect.top < entityRect.bottom - 5 && playerRect.bottom > entityRect.top + 5) {
+                        collidingEntities = [player, entity];
+                        showModal();
+                    }
+                }
+            });
+        }
+    }
+
+    setInterval(checkCollision, 100);
+
+    function isColliding(rect1, rect2) {
+        return (
+            rect1.left < rect2.right &&
+            rect1.right > rect2.left &&
+            rect1.top < rect2.bottom &&
+            rect1.bottom > rect2.top
+        );
+    }
+
+    function getRandomPosition() {
+        let posX, posY, aiRect;
+        const playerRect = player.getBoundingClientRect();
+
+        do {
+            posX = Math.random() * (gameContainer.clientWidth - 50);
+            posY = Math.random() * (gameContainer.clientHeight - 50);
+            aiRect = {
+                left: posX,
+                right: posX + 50,
+                top: posY,
+                bottom: posY + 50,
+            };
+        } while (isColliding(playerRect, aiRect));
+
+        return { posX, posY };
+    }
+
+    function resetPositions() {
+        let posX, posY, aiRect, playerRect;
+        do {
+            posX = Math.random() * (gameContainer.clientWidth - 50);
+            posY = Math.random() * (gameContainer.clientHeight - 50);
+            player.style.top = `${posY}px`;
+            player.style.left = `${posX}px`;
+            playerRect = player.getBoundingClientRect();
+
+            entities.forEach(entity => {
+                if (entity !== player) {
+                    const position = getRandomPosition();
+                    entity.style.top = `${position.posY}px`;
+                    entity.style.left = `${position.posX}px`;
+                }
+            });
+        } while (entities.some(entity => entity !== player && isColliding(playerRect, entity.getBoundingClientRect())));
+    }
+
+    for (let i = 0; i < 5; i++) {
+        const ai = document.createElement('div');
+        ai.className = 'ai';
+        ai.id = `ai${i + 1}`;
+        const position = getRandomPosition();
+        ai.style.top = `${position.posY}px`;
+        ai.style.left = `${position.posX}px`;
+        ai.innerHTML = `<span>${ai.id}</span><span class="aiScore">0</span>`;
+        gameContainer.appendChild(ai);
+        entities.push(ai);
+    }
+
+    function showModal() {
+        if (!modal.style.display || modal.style.display === 'none') {
+            modal.style.display = 'block';
+            canMove = false;
+            canTriggerCollision = false;
+            spongeBobInput.disabled = false;
+            spongeBobInput.style.backgroundColor = '';
+            spongeBobInput.style.color = 'black';
+            spongeBobInput.value = '';
+            patrickStarInput.value = '';
+            largeInput.value = '';
+
+            inputTimer = setTimeout(() => {
+                if (!spongeBobInput.value || spongeBobInput.value < 0 || spongeBobInput.value > 19) {
+                    spongeBobInput.value = Math.floor(Math.random() * 20);
+                }
+                spongeBobValue = parseInt(spongeBobInput.value);
+                spongeBobInput.disabled = true;
+                spongeBobInput.style.backgroundColor = 'lightgray';
+                spongeBobInput.style.color = 'yellow';
+                patrickStarInput.value = Math.floor(Math.random() * 20);
+                patrickStarInput.style.color = 'yellow';
+            }, 8000);
+
+            let seconds = 8;
+            timerDisplay.textContent = seconds;
+            clearInterval(modalTimer);
+            modalTimer = setInterval(() => {
+                seconds--;
+                timerDisplay.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(modalTimer);
+                    startText.style.display = 'block';
+                    setTimeout(() => {
+                        startText.style.display = 'none';
+                        seconds = 12;
+                        timerDisplay.textContent = seconds;
+                        modalTimer = setInterval(() => {
+                            seconds--;
+                            timerDisplay.textContent = seconds;
+                            if (seconds <= 0) {
+                                clearInterval(modalTimer);
+                                clearTimeout(inputTimer);
+                                largeInputValue = parseInt(largeInput.value) || 0;
+                                let scoreChange = 0;
+                                if (spongeBobValue <= 10 && patrickStarInput.value <= 10) {
+                                    scoreChange = 0.5;
+                                } else if (spongeBobValue >= 11 && patrickStarInput.value >= 11) {
+                                    scoreChange = 1.5;
+                                } else {
+                                    scoreChange = 1;
+                                }
+                                if (largeInputValue === spongeBobValue * patrickStarInput.value) {
+                                    playerScore += scoreChange;
+                                    showLevelUp();
+                                } else if (playerScore > 0) {
+                                    playerScore = Math.max(0, playerScore - scoreChange);
+                                }
+                                playerScoreDisplay.textContent = playerScore;
+                                const aiScoreDisplay = collidingEntities[1].querySelector('.aiScore');
+                                let aiScore = parseFloat(aiScoreDisplay.textContent);
+                                aiScore = largeInputValue === spongeBobValue * patrickStarInput.value ? aiScore - scoreChange : aiScore + scoreChange;
+                                aiScoreDisplay.textContent = Math.max(0, aiScore);
+                                modal.style.display = 'none';
+                                setTimeout(() => {
+                                    canTriggerCollision = true;
+                                }, 5000); // 5秒冷却期
+                                canMove = true;
+                            }
+                        }, 1000);
+                    }, 1000);
+                }
+            }, 1000);
+        }
+    }
+
+    function showLevelUp() {
+        levelUpDisplay.style.display = 'block';
+        setTimeout(() => {
+            levelUpDisplay.style.display = 'none';
+        }, 2000);
+    }
+
+    function startAIScoreChange(difficulty) {
+        aiScoreChangeInterval = setInterval(() => {
+            if (gameEnded) return;
+            entities.forEach(entity => {
+                if (entity !== player) {
+                    const scoreDisplay = entity.querySelector('.aiScore');
+                    let score = parseFloat(scoreDisplay.textContent);
+                    const randomValue = Math.random();
+                    if (randomValue < difficulty / 10) {
+                        score += 1;
+                    } else if (score > 0) {
+                        score -= 1;
+                    }
+                    scoreDisplay.textContent = Math.max(0, score);
+                }
+            });
+        }, 30000); // 30秒间隔
+    }
+
+    function showLeaderboard() {
+        const scores = entities.map(entity => {
+            const name = entity.querySelector('span').textContent;
+            const score = parseFloat(entity.querySelector('.aiScore, #player1Score').textContent);
+            return { name, score, isPlayer: entity === player };
+        });
+
+        scores.sort((a, b) => {
+            if (b.score === a.score) {
+                return b.isPlayer ? 1 : -1;
+            }
+            return b.score - a.score;
+        });
+
+        leaderboardTable.innerHTML = '';
+        scores.forEach((entry, index) => {
+            const row = document.createElement('tr');
+            const rankCell = document.createElement('td');
+            const nameCell = document.createElement('td');
+            const scoreCell = document.createElement('td');
+
+            rankCell.textContent = index + 1;
+            nameCell.textContent = entry.name;
+            scoreCell.textContent = entry.score;
+
+            if (index === 0) {
+                rankCell.innerHTML = `<span class="medal gold">🥇</span>`;
+            } else if (index === 1) {
+                rankCell.innerHTML = `<span class="medal silver">🥈</span>`;
+            } else if (index === 2) {
+                rankCell.innerHTML = `<span class="medal bronze">🥉</span>`;
+            }
+
+            row.appendChild(rankCell);
+            row.appendChild(nameCell);
+            row.appendChild(scoreCell);
+            leaderboardTable.appendChild(row);
+        });
+
+        leaderboard.style.display = 'block';
+    }
+</script>
+</body>
+</html>
